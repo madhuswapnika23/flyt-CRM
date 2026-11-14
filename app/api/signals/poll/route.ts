@@ -3,6 +3,7 @@ import { callTool } from "@/lib/mcp";
 import { readNormalizedData } from "@/lib/intel/data";
 import { claimSignalPoll, get, getLastSignalPollAt, set } from "@/lib/store";
 import { getStoredSignalEvents, ingestSignalPayload } from "@/lib/signals";
+import { safeErrorMessage } from "@/lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -33,12 +34,12 @@ export async function GET(): Promise<NextResponse> {
       await set<PollCache>("signals/poll-cache", { fetchedAt: new Date().toISOString(), error: null });
       return NextResponse.json({ ok: true, cached: false, events: ingested.events, added: ingested.added, nextPollAt: new Date(now + POLL_INTERVAL_MS).toISOString(), error: null });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Signal polling failed.";
+      const message = safeErrorMessage(error, "Signal polling failed.");
       await set<PollCache>("signals/poll-cache", { fetchedAt: cache?.fetchedAt ?? null, error: message });
       return response(true, now + POLL_INTERVAL_MS, message);
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Signal cache is unavailable.";
+    const message = safeErrorMessage(error, "Signal cache is unavailable.");
     return NextResponse.json({ ok: false, cached: true, events: [], nextPollAt: null, error: message }, { status: 503 });
   }
 }

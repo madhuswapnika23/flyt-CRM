@@ -2,6 +2,7 @@ import Link from "next/link";
 import { buildAccountIntel } from "@/lib/intel";
 import { readNormalizedData } from "@/lib/intel/data";
 import { PageTitle, Panel, SourceChip, StatusBadge } from "@/app/components/dashboard-ui";
+import { safeErrorMessage } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function OverviewPage() {
   let data;
   let error: string | null = null;
   try { data = await readNormalizedData(); }
-  catch (cause) { error = cause instanceof Error ? cause.message : "Stored account data could not be read."; }
+  catch (cause) { error = safeErrorMessage(cause, "Stored account data could not be read."); }
   if (!data) return <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">Dashboard unavailable: {error ?? "No stored data."}</div>;
 
   const accounts = data.accounts.map((account) => ({ account, intel: buildAccountIntel(data, account.sourceId)! }));

@@ -4,6 +4,7 @@ import { readNormalizedData } from "@/lib/intel/data";
 import { callTool } from "@/lib/mcp";
 import { extractAllowedNoteKinds, extractObservedNoteKinds, type NoteDraft } from "@/lib/notes";
 import { get, list, set } from "@/lib/store";
+import { safeErrorMessage } from "@/lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -76,7 +77,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     await set(`notes/drafts/${id}`, draft);
     return NextResponse.json({ ok: true, draft }, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not save the draft note.";
+    const message = safeErrorMessage(error, "Could not save the draft note.");
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

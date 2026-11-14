@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { buildAccountIntel } from "@/lib/intel";
 import { readNormalizedData } from "@/lib/intel/data";
 import { Muted, PageTitle, Panel, SourceChip, StatusBadge } from "@/app/components/dashboard-ui";
+import { safeErrorMessage } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ export default async function AccountPage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   let data;
   try { data = await readNormalizedData(); }
-  catch (error) { return <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">Account data unavailable: {error instanceof Error ? error.message : "Stored data could not be read."}</div>; }
+  catch (error) { return <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">Account data unavailable: {safeErrorMessage(error, "Stored data could not be read.")}</div>; }
   const account = data.accounts.find((item) => item.sourceId === id);
   if (!account) notFound();
   const intel = buildAccountIntel(data, account.sourceId)!;

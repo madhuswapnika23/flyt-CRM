@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildAccountIntel } from "@/lib/intel";
 import { readNormalizedData } from "@/lib/intel/data";
+import { safeErrorMessage } from "@/lib/security";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export async function GET(_request: Request, context: { params: Promise<{ accoun
     if (!intel) return NextResponse.json({ error: `Account ${account} was not found in stored data.` }, { status: 404 });
     return NextResponse.json(intel);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Could not build account intelligence.";
+    const message = safeErrorMessage(error, "Could not build account intelligence.");
     return NextResponse.json({ error: message }, { status: 503 });
   }
 }

@@ -1,11 +1,12 @@
 import { claimMcpCall } from "@/lib/store";
+import { redactSecrets } from "@/lib/security";
 
 const MCP_URL = "https://questathon.aihackerscollective.com/api/public/mcp";
 const MINIMUM_SPACING_MS = 61_000;
 
 export class McpError extends Error {
   constructor(message: string, public readonly code: string, public readonly status?: number) {
-    super(message);
+    super(redactSecrets(message));
     this.name = "McpError";
   }
 }

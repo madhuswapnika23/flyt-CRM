@@ -1,6 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { callTool, McpRateLimitError, type McpResponse } from "@/lib/mcp";
+import { callTool } from "@/lib/mcp";
 import { get, set } from "@/lib/store";
 import { readNormalizedData } from "@/lib/intel/data";
 import { ingestSignalPayload } from "@/lib/signals";
@@ -35,21 +35,10 @@ async function readExisting(key: string): Promise<StoredRaw | null> {
   }
 }
 
-async function callAfterGate(name: string, args: Record<string, unknown>): Promise<McpResponse> {
-  try {
-    return await callTool(name, args);
-  } catch (error) {
-    if (!(error instanceof McpRateLimitError)) throw error;
-    const waitMs = Math.max(0, error.lastCallAt + 61_000 - Date.now() + 100);
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
-    return callTool(name, args);
-  }
-}
-
 async function fetchIfMissing(key: string, toolName: string, args: Record<string, unknown> = {}): Promise<StoredRaw> {
   const existing = await readExisting(key);
   if (existing) return existing;
-  const response = await callAfterGate(toolName, args);
+  const response = await callTool(toolName, args);
   const stored = { fetchedAt: new Date().toISOString(), raw: response.raw };
   await set(key, stored);
   return stored;

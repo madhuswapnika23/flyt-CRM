@@ -1,13 +1,14 @@
 import { buildAccountIntel } from "@/lib/intel";
 import { readNormalizedData } from "@/lib/intel/data";
 import { Muted, PageTitle, SourceChip, StatusBadge } from "@/app/components/dashboard-ui";
+import { safeErrorMessage } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 export default async function ActionsPage() {
   let data;
   try { data = await readNormalizedData(); }
-  catch (error) { return <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">Actions unavailable: {error instanceof Error ? error.message : "Stored data could not be read."}</div>; }
+  catch (error) { return <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">Actions unavailable: {safeErrorMessage(error, "Stored data could not be read.")}</div>; }
   const rows = data.accounts.flatMap((account) => buildAccountIntel(data, account.sourceId)!.firstThree.map((action) => ({ ...action, accountName: account.name })))
     .sort((a, b) => b.score - a.score || a.account.localeCompare(b.account) || (a.relatedDeal ?? "").localeCompare(b.relatedDeal ?? ""));
   return <>

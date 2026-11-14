@@ -67,10 +67,41 @@ To sync against a different local app URL, set `SYNC_BASE_URL` in `.env.local` (
 | `npm run probe` | Fetch and save the account probe response |
 | `npm run sync` | Call the protected initial sync endpoint |
 | `npm run intel:summary` | Print an intelligence summary from stored data |
+| `npm run audit:security` | Scan the configured token against source, `.next`, and Git history |
+| `npm run smoke -- <url>` | Smoke-test a deployment without sending notes or starting sync |
 
 ## VS Code MCP connection
 
 The workspace MCP configuration prompts for the Questathon token at connection time. Enter the token in the prompt; do not replace the placeholder in `.vscode/mcp.json` with a literal token.
+
+## Deploy to Vercel
+
+### Checklist
+
+1. In Vercel, choose **Add New → Project**, import `madhuswapnika23/flyt-CRM`, and keep the detected Next.js framework and repository root.
+2. From the project’s **Storage** or Marketplace page, add an Upstash Redis database and connect it to this project. Confirm the integration provides `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
+3. In **Settings → Environment Variables**, add `AQ_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and `SYNC_SECRET` for Production. Add them to Preview too only if previews need real Questathon data. Keep them server-side; never prefix them with `NEXT_PUBLIC_`.
+4. Deploy. If you changed environment variables after the first deployment, redeploy so the new deployment receives them.
+5. Before syncing, run `npm run audit:security` locally to check that the configured token is absent from source, build output, and Git history.
+6. Run the first sync against the deployed protected route from a trusted terminal where `SYNC_SECRET` is available locally:
+
+   ```powershell
+   npm run sync -- https://your-project.vercel.app
+   ```
+
+   The script sends the secret in the `x-sync-secret` request header and resumes after each MCP rate-limit window. Each request checkpoints fetched data in Upstash, so the sync can continue across Vercel function invocations and data remains available across deployments.
+7. Run the deployment smoke check from a trusted terminal with `AQ_TOKEN` available locally (for example, in `.env.local`):
+
+   ```powershell
+   npm run smoke -- https://your-project.vercel.app
+   ```
+
+   It checks every page, the read APIs, evidence lookup, the expected guards on write routes, and response bodies/headers for the token string. It does not write a note, acknowledge a signal, or start a sync.
+8. Open the deployment in an incognito/private window. Check the dashboard and account pages, `/api/health` (`redisConfigured` should be `true`), Notes, and the sync result. A refresh or new deployment should retain synced data.
+
+The `/api/sync` route requires `x-sync-secret` and is not callable without `SYNC_SECRET`. The route stops on MCP rate limits and returns a `Retry-After` response instead of sleeping through multiple windows inside one serverless invocation. The `vercel.json` function duration setting is 300 seconds; the sync flow is designed so an invocation only performs the next available MCP call.
+
+**Access control:** the app does not currently implement user sign-in. Its pages and read APIs are public at the deployment URL. Before putting non-public customer records on a public deployment, enable Vercel Deployment Protection or add application authentication.
 
 ## Security and local data
 

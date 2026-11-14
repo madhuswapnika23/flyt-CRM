@@ -1,4 +1,5 @@
 import { readNormalizedData } from "@/lib/intel/data";
+import { safeErrorMessage } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
@@ -6,7 +7,7 @@ export default async function DebugPage() {
   let data;
   let error: string | null = null;
   try { data = await readNormalizedData(); }
-  catch (cause) { error = cause instanceof Error ? cause.message : "Stored data could not be read."; }
+  catch (cause) { error = safeErrorMessage(cause, "Stored data could not be read."); }
 
   const records = data ? {
     accounts: data.accounts,

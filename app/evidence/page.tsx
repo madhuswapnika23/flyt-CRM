@@ -1,13 +1,14 @@
 import { readNormalizedData } from "@/lib/intel/data";
 import { Muted, PageTitle, Panel, SourceChip, StatusBadge } from "@/app/components/dashboard-ui";
 import { SignalTimeline } from "@/app/components/signal-ui";
+import { safeErrorMessage } from "@/lib/security";
 
 export const dynamic = "force-dynamic";
 
 export default async function EvidencePage() {
   let data;
   try { data = await readNormalizedData(); }
-  catch (error) { return <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">Evidence unavailable: {error instanceof Error ? error.message : "Stored data could not be read."}</div>; }
+  catch (error) { return <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-900">Evidence unavailable: {safeErrorMessage(error, "Stored data could not be read.")}</div>; }
   const accounts = data.accounts;
   const facts = accounts.flatMap((account) => account.facts.map((fact) => ({ ...fact, account: account.name })));
   const finances = accounts.flatMap((account) => [

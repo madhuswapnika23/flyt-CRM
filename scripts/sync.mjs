@@ -11,16 +11,34 @@ if (!process.env.SYNC_SECRET) {
   process.exit(1);
 }
 
-const baseUrl = process.env.SYNC_BASE_URL ?? "http://localhost:3000";
+const baseUrl = process.argv[2] ?? "http://localhost:3000";
+const syncUrl = new URL("/api/sync", baseUrl);
+
 try {
-  const response = await fetch(new URL("/api/sync", baseUrl), {
-    method: "POST",
-    headers: { "x-sync-secret": process.env.SYNC_SECRET, accept: "application/json" },
-  });
-  const body = await response.json();
-  console.log(JSON.stringify(body, null, 2));
-  if (!response.ok) process.exitCode = 1;
-} catch (error) {
-  console.error(error instanceof Error ? error.message : "Sync request failed.");
+  while (true) {
+    const response = await fetch(syncUrl, {
+      method: "POST",
+      headers: { "x-sync-secret": process.env.SYNC_SECRET, accept: "application/json" },
+    });
+    const body = await response.json();
+
+    if (response.status === 429) {
+      const retryAfter = Math.max(1, Number(response.headers.get("retry-after") ?? body.retryAfter ?? 61));
+      console.log(`Sync is safely checkpointed. Resuming in ${retryAfter} seconds.`);
+      await new Promise((resolve) => setTimeout(resolve, retryAfter * 1_000));
+      continue;
+    }
+
+    if (!response.ok) {
+      console.error(JSON.stringify(body, null, 2));
+      process.exitCode = 1;
+      break;
+    }
+
+    console.log(JSON.stringify(body, null, 2));
+    break;
+  }
+} catch {
+  console.error("Sync request failed. Check the URL, network, and deployment logs.");
   process.exitCode = 1;
 }

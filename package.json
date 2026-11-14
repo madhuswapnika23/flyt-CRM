@@ -8,6 +8,8 @@
     "lint": "eslint .",
     "probe": "tsx scripts/probe.mjs",
     "sync": "tsx scripts/sync.mjs",
+    "smoke": "node scripts/smoke-test.mjs",
+    "audit:security": "node scripts/security-audit.mjs",
     "intel:summary": "tsx scripts/intel-summary.mjs",
     "test": "vitest run"
   },

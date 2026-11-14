@@ -8,12 +8,23 @@ const redisToken = process.env.UPSTASH_REDIS_REST_TOKEN;
 const redis = redisUrl && redisToken ? new Redis({ url: redisUrl, token: redisToken }) : null;
 let localClaimQueue: Promise<void> = Promise.resolve();
 
+function ensureStorageConfigured(): void {
+  if (process.env.VERCEL === "1" && !redis) {
+    throw new Error("Upstash Redis is required for persistent storage on Vercel.");
+  }
+}
+
+export function isRedisConfigured(): boolean {
+  return redis !== null;
+}
+
 function filePath(key: string): string {
   const safeKey = key.split("/").map(encodeURIComponent).join(path.sep);
   return path.join(dataDirectory, `${safeKey}.json`);
 }
 
 export async function get<T>(key: string): Promise<T | null> {
+  ensureStorageConfigured();
   if (redis) return (await redis.get<T>(key)) ?? null;
 
   try {
@@ -25,6 +36,7 @@ export async function get<T>(key: string): Promise<T | null> {
 }
 
 export async function set<T>(key: string, value: T): Promise<void> {
+  ensureStorageConfigured();
   if (redis) {
     await redis.set(key, value);
     return;
@@ -36,6 +48,7 @@ export async function set<T>(key: string, value: T): Promise<void> {
 }
 
 export async function list<T>(prefix: string): Promise<Array<{ key: string; value: T }>> {
+  ensureStorageConfigured();
   if (redis) {
     const keys = await redis.keys(`${prefix}*`);
     const values = await Promise.all(keys.map((key) => redis.get<T>(key)));
@@ -67,6 +80,7 @@ export async function list<T>(prefix: string): Promise<Array<{ key: string; valu
 
 /** Atomically claims a call slot in Redis, or checks it in local development. */
 export async function claimMcpCall(now: number, minimumSpacingMs: number): Promise<number | null> {
+  ensureStorageConfigured();
   const key = "system/mcp-last-call-at";
   if (redis) {
     const result = await redis.eval<[string, string], number>(
@@ -98,6 +112,7 @@ export async function getLastCallAt(): Promise<number | null> {
 
 /** Atomically reserves a poll window so concurrent serverless requests cannot duplicate calls. */
 export async function claimSignalPoll(now: number, minimumSpacingMs: number): Promise<number | null> {
+  ensureStorageConfigured();
   const key = "system/signals-last-poll-at";
   if (redis) {
     const result = await redis.eval<[string, string], number>(
