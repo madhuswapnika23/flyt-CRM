@@ -1,0 +1,19 @@
+{
+  "inputs": [
+    {
+      "type": "promptString",
+      "id": "questathon-token",
+      "description": "Questathon personal access token",
+      "password": true
+    }
+  ],
+  "servers": {
+    "questathon": {
+      "type": "http",
+      "url": "https://questathon.aihackerscollective.com/api/public/mcp",
+      "headers": {
+        "Authorization": "Bearer ${input:questathon-token}"
+      }
+    }
+  }
+}
