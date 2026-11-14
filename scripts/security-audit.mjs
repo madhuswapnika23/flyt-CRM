@@ -59,7 +59,7 @@ async function collectClientFiles(directory) {
   }
 }
 await collectClientFiles(path.join(projectRoot, "app"));
-const clientTokenUsage = clientFiles.filter(({ text }) => /AQ_TOKEN|UPSTASH_REDIS_REST_TOKEN|SYNC_SECRET/.test(text));
+const clientTokenUsage = clientFiles.filter(({ text }) => /AQ_TOKEN|UPSTASH_REDIS_REST_TOKEN|KV_REST_API_TOKEN|SYNC_SECRET/.test(text));
 const clientBundleSecretRefs = [];
 async function scanClientBundles(directory) {
   let entries;
@@ -69,7 +69,7 @@ async function scanClientBundles(directory) {
     if (entry.isDirectory()) await scanClientBundles(fullPath);
     else if (entry.isFile()) {
       const text = await readFile(fullPath, "utf8");
-      if (/AQ_TOKEN|UPSTASH_REDIS_REST_TOKEN|SYNC_SECRET/.test(text)) clientBundleSecretRefs.push(path.relative(projectRoot, fullPath));
+      if (/AQ_TOKEN|UPSTASH_REDIS_REST_TOKEN|KV_REST_API_TOKEN|SYNC_SECRET/.test(text)) clientBundleSecretRefs.push(path.relative(projectRoot, fullPath));
     }
   }
 }
@@ -121,7 +121,7 @@ if (failures.length) {
 }
 
 console.log("PASS token value absent from working files (excluding .env.local), .next output, and Git history");
-console.log("PASS no AQ_TOKEN/Upstash token/SYNC_SECRET references in client component source or compiled client assets");
+console.log("PASS no AQ_TOKEN/Upstash/KV tokens or SYNC_SECRET references in client component source or compiled client assets");
 console.log("PASS no NEXT_PUBLIC secret assignments found");
 console.log("PASS /api/health reports only token presence, not its value");
 console.log("PASS no request headers or credential variables are printed by console logging");

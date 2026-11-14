@@ -19,7 +19,7 @@ Copy-Item .env.example .env.local
 
 Open `.env.local` and set `AQ_TOKEN` to your Questathon personal token. Set `SYNC_SECRET` to a private random value used to protect the sync endpoint. Keep `.env.local` private; it is excluded from Git.
 
-Optional Upstash settings (`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) enable Redis-backed storage. If both are omitted, the app writes its local runtime data under `data/`, which is ignored by Git.
+Optional Upstash settings (`UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`, or Vercel Marketplace's `KV_REST_API_URL` and `KV_REST_API_TOKEN`) enable Redis-backed storage. If both are omitted, the app writes its local runtime data under `data/`, which is ignored by Git.
 
 ## Run locally
 
@@ -79,8 +79,8 @@ The workspace MCP configuration prompts for the Questathon token at connection t
 ### Checklist
 
 1. In Vercel, choose **Add New → Project**, import `madhuswapnika23/flyt-CRM`, and keep the detected Next.js framework and repository root.
-2. From the project’s **Storage** or Marketplace page, add an Upstash Redis database and connect it to this project. Confirm the integration provides `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`.
-3. In **Settings → Environment Variables**, add `AQ_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and `SYNC_SECRET` for Production. Add them to Preview too only if previews need real Questathon data. Keep them server-side; never prefix them with `NEXT_PUBLIC_`.
+2. From the project’s **Storage** or Marketplace page, add an Upstash Redis database and connect it to this project. The app accepts either `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` or Vercel Marketplace's `KV_REST_API_URL` / `KV_REST_API_TOKEN`.
+3. In **Settings → Environment Variables**, add `AQ_TOKEN`, `SYNC_SECRET`, and whichever Redis variable pair the integration provides: `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` or legacy `KV_REST_API_URL` / `KV_REST_API_TOKEN`. Add them for Production, and to Preview only if previews need real Questathon data. Keep them server-side; never prefix them with `NEXT_PUBLIC_`.
 4. Deploy. If you changed environment variables after the first deployment, redeploy so the new deployment receives them.
 5. Before syncing, run `npm run audit:security` locally to check that the configured token is absent from source, build output, and Git history.
 6. Run the first sync against the deployed protected route from a trusted terminal where `SYNC_SECRET` is available locally:

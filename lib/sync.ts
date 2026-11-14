@@ -1,7 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { callTool } from "@/lib/mcp";
-import { get, set } from "@/lib/store";
+import { get, isRedisConfigured, set } from "@/lib/store";
 import { readNormalizedData } from "@/lib/intel/data";
 import { ingestSignalPayload } from "@/lib/signals";
 
@@ -13,7 +13,7 @@ interface StoredRaw {
 async function readExisting(key: string): Promise<StoredRaw | null> {
   const stored = await get<StoredRaw>(key);
   if (stored) return stored;
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) return null;
+  if (isRedisConfigured()) return null;
   const localFiles: Record<string, string> = {
     accounts: "get_my_accounts.json",
     "raw/accounts": "get_my_accounts.json",
